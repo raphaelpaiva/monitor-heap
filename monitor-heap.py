@@ -3,7 +3,8 @@ import argparse
 import logging
 import socket
 import sys
-from subprocess import call
+import subprocess
+import json
 
 def main():
     config_log()
@@ -38,10 +39,25 @@ def parse_args():
     return parser.parse_args()
 
 def monitor(controller, max_heap, sleep_interval):
-    command = "test"
-
     logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
-    call(["/opt/jboss/bin/jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command])
+    used_heap = read_used_heap(controller)
+    logging.info("%s heap: %f gb", controller, used_heap)
+
+
+def read_used_heap(controller):
+    command = "/core-service=platform-mbean/type=memory:read-resource(include-runtime=true)"
+    
+    process = subprocess.Popen(["/opt/jboss/bin/jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command], stdout=subprocess.PIPE)
+    stdout = process.communicate()[0]
+    
+    stdout = stdout.replace("=>", ":").replace("L", "")
+    result = json.loads(stdout)
+
+    used_heap = result['result']['heap-memory-usage']['used']
+    used_heap = float(used_heap)/1024/1024/1024
+
+    return used_heap
 
 
 if __name__ == "__main__": main()
+
