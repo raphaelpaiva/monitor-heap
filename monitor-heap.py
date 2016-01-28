@@ -3,11 +3,12 @@ import argparse
 import logging
 import socket
 import sys
+from subprocess import call
 
 def main():
     config_log()
     args = parse_args()
-    logging.info("Monitoring controller: %s; max_heap: %s; interval %s", args.controller, args.max_heap, args.sleep_interval)
+    monitor(args.controller, args.max_heap, args.sleep_interval)
 
 def config_log():
     logging.basicConfig(format="%(asctime)s ["+sys.argv[0]+"] %(message)s",
@@ -35,6 +36,12 @@ def parse_args():
 
 
     return parser.parse_args()
+
+def monitor(controller, max_heap, sleep_interval):
+    command = "test"
+
+    logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
+    call(["/opt/jboss/bin/Jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command])
 
 
 if __name__ == "__main__": main()
