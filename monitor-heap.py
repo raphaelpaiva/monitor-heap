@@ -41,7 +41,7 @@ def monitor(controller, max_heap, sleep_interval):
     command = "test"
 
     logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
-    call(["/opt/jboss/bin/Jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command])
+    call(["/opt/jboss/bin/jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command])
 
 
 if __name__ == "__main__": main()
