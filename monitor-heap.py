@@ -6,6 +6,8 @@ import sys
 import jbosscli
 from time import sleep
 
+log = None
+
 def main():
     config_log()
     args = parse_args()
@@ -15,9 +17,11 @@ def main():
         monitor(args.controller, args.max_heap, args.sleep_interval)
 
 def config_log():
-    logging.basicConfig(format="%(asctime)s ["+sys.argv[0]+"] %(message)s",
+    logging.basicConfig(format="%(asctime)s [%(name)s] %(message)s",
                         datefmt="%d/%m/%Y %H:%M:%S",
-                        level=logging.INFO)
+                        level=logging.DEBUG)
+    global log
+    log = logging.getLogger("monitor-heap")
 
 def parse_args():
     default_hostname       = socket.gethostname() + ":9999"
@@ -46,21 +50,21 @@ def parse_args():
     return parser.parse_args()
 
 def monitor(controller, max_heap, sleep_interval):
-    logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
+    log.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
 
     while(True):
         try:
             used_heap = jbosscli.read_used_heap(controller)
 
-            logging.info("%s heap: %f gb", controller, used_heap)
+            log.info("%s heap: %f gb", controller, used_heap)
 
             if (used_heap > max_heap):
-               logging.warn("Restaring %s", controller)
+               log.warn("Restaring %s", controller)
                jbosscli.restart(controller)
 
         except jbosscli.CliError as e:
-            logging.error("An error occurred while monitoring %s", controller)
-            logging.error(e)
+            log.error("An error occurred while monitoring %s", controller)
+            log.error(e)
 
         sleep(sleep_interval)
         
