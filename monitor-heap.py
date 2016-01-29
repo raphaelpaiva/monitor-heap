@@ -42,15 +42,21 @@ def monitor(controller, max_heap, sleep_interval):
     logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
 
     while(True):
-        used_heap = jbosscli.read_used_heap(controller)
+        try:
+            used_heap = jbosscli.read_used_heap(controller)
 
-        logging.info("%s heap: %f gb", controller, used_heap)
+            logging.info("%s heap: %f gb", controller, used_heap)
 
-        if (used_heap > max_heap):
-           logging.warn("Restaring %s", controller)
-           jbosscli.restart(controller)
+            if (used_heap > max_heap):
+               logging.warn("Restaring %s", controller)
+               jbosscli.restart(controller)
+
+        except jbosscli.CliError as e:
+            logging.error("An error occurred while monitoring %s", controller)
+            logging.error(e)
 
         sleep(sleep_interval)
+        
 
 if __name__ == "__main__": main()
 
