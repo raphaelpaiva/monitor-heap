@@ -19,7 +19,7 @@ def main():
 def config_log():
     logging.basicConfig(format="%(asctime)s [%(name)s] %(message)s",
                         datefmt="%d/%m/%Y %H:%M:%S",
-                        level=logging.DEBUG)
+                        level=logging.INFO)
     global log
     log = logging.getLogger("monitor-heap")
 
@@ -70,7 +70,26 @@ def monitor(controller, max_heap, sleep_interval):
         
 
 def monitor_domain(controller):
-    jbosscli.list_domain_hosts(controller)
+    log.info("Monitoring domain controller: %s", controller)
+    hosts = jbosscli.list_domain_hosts(controller)
+    log.info("Found %i hosts: %s", len(hosts), ", ".join(hosts))
+    
+    instances = []
+    for host in hosts:
+        servers = jbosscli.list_servers(controller, host)
+        for server in servers:
+            instances.append(ServerInstance(server, host))
+    log.info("Found %i instances:", len(instances))
+    
+    for instance in instances:
+        log.info(instance)
+
+class ServerInstance:
+    def __init__(self, name, host):
+        self.name = name
+        self.host = host
+    def __str__(self):
+        return "[{0}, {1}]".format(self.host, self.name)
 
 if __name__ == "__main__": main()
 
