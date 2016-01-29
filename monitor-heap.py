@@ -9,7 +9,10 @@ from time import sleep
 def main():
     config_log()
     args = parse_args()
-    monitor(args.controller, args.max_heap, args.sleep_interval)
+    if (args.domain):
+        monitor_domain(args.controller)
+    else:
+        monitor(args.controller, args.max_heap, args.sleep_interval)
 
 def config_log():
     logging.basicConfig(format="%(asctime)s ["+sys.argv[0]+"] %(message)s",
@@ -34,6 +37,10 @@ def parse_args():
                         help="The time in seconds between reads",
                         type=int,
                         default=default_sleep_interval)
+   
+    parser.add_argument("--domain",
+                        help="Monitor all instances managed by the controller in domain mode",
+                        action="store_true")
 
 
     return parser.parse_args()
@@ -57,6 +64,9 @@ def monitor(controller, max_heap, sleep_interval):
 
         sleep(sleep_interval)
         
+
+def monitor_domain(controller):
+    jbosscli.list_domain_hosts(controller)
 
 if __name__ == "__main__": main()
 
