@@ -3,8 +3,8 @@ import argparse
 import logging
 import socket
 import sys
-import subprocess
 import json
+import jbosscli
 from time import sleep
 
 def main():
@@ -41,40 +41,19 @@ def parse_args():
 
 def monitor(controller, max_heap, sleep_interval):
     logging.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
-    
+
     while(True):
-        used_heap = read_used_heap(controller)
+        used_heap = jbosscli.read_used_heap(controller)
 
         logging.info("%s heap: %f gb", controller, used_heap)
-	
+
         if (used_heap > max_heap):
            logging.warn("Restaring %s", controller)
-           restart(controller)
+           jbosscli.restart(controller)
 
         sleep(sleep_interval)
 
-def invoke_cli(controller, command):
-    process = subprocess.Popen(["/opt/jboss/bin/jboss-cli.sh", "--connect", "controller=%s"%controller, "--command=%s"%command], stdout=subprocess.PIPE)
-    stdout = process.communicate()[0]
-    
-    stdout = stdout.replace("=>", ":").replace("L", "") #I know. Silly.
-    result = json.loads(stdout)
-    
-    return result
-
-def read_used_heap(controller):
-    command = "/core-service=platform-mbean/type=memory:read-resource(include-runtime=true)" 
-    
-    result = invoke_cli(controller, command)
-    
-    used_heap = result['result']['heap-memory-usage']['used']
-    used_heap = float(used_heap)/1024/1024/1024
-
-    return used_heap
-
-def restart(controller):
-    command = ":shutdown(restart=true)"
-    return invoke_cli(controller, command)
-
 if __name__ == "__main__": main()
 
+#/host=accelo/server=sigadoc-server01/core-service=platform-mbean/type=memory:read-resource(include-runtime=true)
+#/host=accelo/server-config=sigadoc-server01:restart(
