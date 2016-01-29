@@ -3,7 +3,6 @@ import argparse
 import logging
 import socket
 import sys
-import json
 import jbosscli
 from time import sleep
 
