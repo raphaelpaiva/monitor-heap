@@ -12,7 +12,7 @@ def main():
     config_log()
     args = parse_args()
     if (args.domain):
-        monitor_domain(args.controller, 95, args.sleep_interval)
+        monitor_domain(args.controller, args.max_heap_usage, args.sleep_interval)
     else:
         monitor(args.controller, args.max_heap, args.sleep_interval)
 
@@ -26,6 +26,7 @@ def config_log():
 def parse_args():
     default_hostname       = socket.gethostname() + ":9999"
     default_max_heap       = 3.5
+    default_max_heap_usage = 95
     default_sleep_interval = 300
 
     parser = argparse.ArgumentParser(description="Monitors heap status via Jboss-cli interface.")
@@ -33,19 +34,28 @@ def parse_args():
     parser.add_argument("--controller",
                         help="The controller to connect to in the hostname:port format",
                         default=default_hostname)
-    parser.add_argument("--max-heap",
-                        help="The value in gb in which to take action",
-                        type=float,
-                        default=default_max_heap)
+
     parser.add_argument("--sleep-interval",
                         help="The time in seconds between reads",
                         type=int,
                         default=default_sleep_interval)
-    parser.add_argument("--domain",
-                        help="Monitor all instances managed by the controller in domain mode",
-                        action="store_true")
+ 
+    domain_group = parser.add_mutually_exclusive_group()
 
+    domain_group.add_argument("--max-heap",
+                              help="The value in gb in which to take action. If in domain mode, use --max-heap-usage.",
+                              type=float,
+                              default=default_max_heap)
 
+    domain_group.add_argument("--domain",
+                              help="Monitor all instances managed by the controller in domain mode",
+                              action="store_true")
+
+    parser.add_argument("--max-heap-usage",
+                        help="The percentage of heap usage in which to take action i.e. --max-heap-usage 95 for a 95%% threshold. If in standalone mode, use --max-heap.",
+                        type=float,
+                        default=default_max_heap_usage)
+  
     return parser.parse_args()
 
 def monitor(controller, max_heap, sleep_interval):
@@ -68,7 +78,8 @@ def monitor(controller, max_heap, sleep_interval):
         sleep(sleep_interval)
         
 
-def monitor_domain(controller, max_heap_usage=95, sleep_interval=300):
+def monitor_domain(controller, max_heap_usage, sleep_interval):
+    log.info("Monitoring domain controller: %s; max_heap_usage: %s%%; interval: %ss", controller, max_heap_usage, sleep_interval)
     instances = discover_instances(controller)
     instances_to_restart = []
 
@@ -100,7 +111,6 @@ def monitor_domain(controller, max_heap_usage=95, sleep_interval=300):
         sleep(sleep_interval)
 
 def discover_instances(controller):
-    log.info("Monitoring domain controller: %s", controller)
     hosts = jbosscli.list_domain_hosts(controller)
     log.info("Found %i hosts: %s", len(hosts), ", ".join(hosts))
 
