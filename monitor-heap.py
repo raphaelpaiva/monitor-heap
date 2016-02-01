@@ -55,7 +55,7 @@ def monitor(controller, max_heap, sleep_interval):
         try:
             used_heap = jbosscli.read_used_heap(controller)[0]
 
-            log.info("%s heap: %f gb", controller, used_heap)
+            log.info("%s heap: %.2f gb", controller, used_heap)
 
             if (used_heap > max_heap):
                log.warn("Restaring %s", controller)
@@ -79,10 +79,10 @@ def monitor_domain(controller, max_heap_usage=95, sleep_interval=300):
         
                 used_heap, max_heap = jbosscli.read_used_heap(controller, instance.host, instance.name)
                 heap_usage = 100 * (used_heap / max_heap)
-                log.info("%s heap: %f gb (out of %f - %f%%)", instance, used_heap, max_heap, heap_usage)
+                log.info("%s heap: %.2f gb (out of %.2f - %.2f%%)", instance, used_heap, max_heap, heap_usage)
         
                 if (heap_usage > max_heap_usage):
-                    log.critical("%s is critical: %f%%", instance, heap_usage)
+                    log.critical("%s is critical: %.2f%%", instance, heap_usage)
                     instances_to_restart.append(instance)
     
                 restart_count = len(instances_to_restart)
