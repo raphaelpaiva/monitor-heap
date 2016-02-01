@@ -4,6 +4,7 @@ import logging
 import socket
 import sys
 import jbosscli
+import tempfile
 from time import sleep
 
 log = None
@@ -18,6 +19,7 @@ def main():
 
 def config_log():
     logging.basicConfig(format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+                        filename=tempfile.gettempdir() + "/monitor-heap.log",
                         datefmt="%d/%m/%Y %H:%M:%S",
                         level=logging.INFO)
     global log
