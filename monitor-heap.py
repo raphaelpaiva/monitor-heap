@@ -19,7 +19,7 @@ def main():
 
 def config_log():
     logging.basicConfig(format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-                        filename=tempfile.gettempdir() + "/monitor-heap.log",
+                        #filename=tempfile.gettempdir() + "/monitor-heap.log",
                         datefmt="%d/%m/%Y %H:%M:%S",
                         level=logging.INFO)
     global log
@@ -42,7 +42,7 @@ def parse_args():
                         help="The time in seconds between reads",
                         type=int,
                         default=default_sleep_interval)
- 
+
     domain_group = parser.add_mutually_exclusive_group()
 
     domain_group.add_argument("--max-heap",
@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument("--auth",
                         help="Authorization key in the format username:password to be used with jboss web interface authentication.",
                         default=default_auth)
-  
+
     return parser.parse_args()
 
 def monitor(controller, auth, max_heap, sleep_interval):
@@ -83,7 +83,7 @@ def monitor(controller, auth, max_heap, sleep_interval):
             log.exception(e)
 
         sleep(sleep_interval)
-        
+
 
 def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
     log.info("Monitoring domain controller: %s; max_heap_usage: %s%%; interval: %ss", controller, max_heap_usage, sleep_interval)
@@ -94,22 +94,22 @@ def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
         for instance in instances:
             try:
                 instances_to_restart[:] = []
-        
+
                 used_heap, max_heap = jbosscli.read_used_heap(controller, auth, instance.host, instance.name)
                 heap_usage = 100 * (used_heap / max_heap)
                 log.info("%s heap: %.2f gb (out of %.2f - %.2f%%)", instance, used_heap, max_heap, heap_usage)
-        
+
                 if (heap_usage > max_heap_usage):
                     log.critical("%s is critical: %.2f%%", instance, heap_usage)
                     instances_to_restart.append(instance)
-    
+
                 restart_count = len(instances_to_restart)
                 if (restart_count > 0):
                     log.info("Restarting %i instances", restart_count)
                     for instance in instances_to_restart:
-                        log.critical("Restarting %s...", instance) 
+                        log.critical("Restarting %s...", instance)
                         jbosscli.restart(controller, auth, instance.host, instance.name)
-            
+
             except jbosscli.CliError as e:
                 log.error("An error occurred while monitoring %s %s", controller, instance)
                 log.exception(e)
@@ -142,4 +142,3 @@ class ServerInstance:
         return "[{0}, {1}]".format(self.host, self.name)
 
 if __name__ == "__main__": main()
-
