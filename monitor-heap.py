@@ -25,6 +25,8 @@ def config_log(controller):
     global log
     log = logging.getLogger("monitor-heap ({0})".format(controller))
 
+    logging.getLogger("requests.packages.urllib3").setLevel(logging.WARNING)
+
 def parse_args():
     default_hostname       = socket.gethostname() + ":9990"
     default_max_heap       = 3.5
