@@ -10,20 +10,20 @@ from time import sleep
 log = None
 
 def main():
-    config_log()
     args = parse_args()
+    config_log(args.controller)
     if (args.domain):
         monitor_domain(args.controller, args.auth, args.max_heap_usage, args.sleep_interval)
     else:
         monitor(args.controller, args.auth, args.max_heap, args.sleep_interval)
 
-def config_log():
+def config_log(controller):
     logging.basicConfig(format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-                        #filename=tempfile.gettempdir() + "/monitor-heap.log",
+                        filename=tempfile.gettempdir() + "/monitor-heap.log",
                         datefmt="%d/%m/%Y %H:%M:%S",
                         level=logging.INFO)
     global log
-    log = logging.getLogger("monitor-heap")
+    log = logging.getLogger("monitor-heap ({0})".format(controller))
 
 def parse_args():
     default_hostname       = socket.gethostname() + ":9990"
@@ -72,10 +72,10 @@ def monitor(controller, auth, max_heap, sleep_interval):
         try:
             used_heap = jbosscli.read_used_heap(controller, auth)[0]
 
-            log.info("%s heap: %.2f gb", controller, used_heap)
+            log.info("heap: %.2f gb", used_heap)
 
             if (used_heap > max_heap):
-               log.warn("Restaring %s", controller)
+               log.warn("Restaring", controller)
                jbosscli.restart(controller, auth)
 
         except jbosscli.CliError as e:
@@ -111,7 +111,7 @@ def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
                         jbosscli.restart(controller, auth, instance.host, instance.name)
 
             except jbosscli.CliError as e:
-                log.error("An error occurred while monitoring %s %s", controller, instance)
+                log.error("An error occurred while monitoring %s", instance)
                 log.exception(e)
 
 
