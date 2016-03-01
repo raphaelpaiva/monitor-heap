@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import argparse
 import logging
+import logging.handlers
 import socket
 import sys
 import jbosscli
@@ -18,12 +19,17 @@ def main():
         monitor(args.controller, args.auth, args.max_heap, args.sleep_interval)
 
 def config_log(controller):
+    log_filename = tempfile.gettempdir() + "/monitor-heap.log";
     logging.basicConfig(format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-                        filename=tempfile.gettempdir() + "/monitor-heap.log",
+                        filename=log_filename,
                         datefmt="%d/%m/%Y %H:%M:%S",
                         level=logging.INFO)
+
     global log
     log = logging.getLogger("monitor-heap ({0})".format(controller))
+
+    handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
+    log.addHandler(handler)
 
     logging.getLogger("requests.packages.urllib3").setLevel(logging.WARNING)
 
