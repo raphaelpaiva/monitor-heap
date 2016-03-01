@@ -20,15 +20,24 @@ def main():
 
 def config_log(controller):
     log_filename = tempfile.gettempdir() + "/monitor-heap.log";
-    logging.basicConfig(format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    log_format = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
+    log_date_format = "%d/%m/%Y %H:%M:%S"
+
+    formatter = logging.Formatter(log_format, log_date_format)
+
+    handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+
+    logging.basicConfig(format=log_format,
                         filename=log_filename,
-                        datefmt="%d/%m/%Y %H:%M:%S",
+                        datefmt=log_date_format,
                         level=logging.INFO)
 
     global log
     log = logging.getLogger("monitor-heap ({0})".format(controller))
 
-    handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
+    log.propagate = False
     log.addHandler(handler)
 
     logging.getLogger("requests.packages.urllib3").setLevel(logging.WARNING)
