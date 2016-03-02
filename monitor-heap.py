@@ -6,6 +6,7 @@ import socket
 import sys
 import jbosscli
 import tempfile
+import os
 from time import sleep
 
 log = None
@@ -19,7 +20,7 @@ def main():
         monitor(args.controller, args.auth, args.max_heap, args.sleep_interval)
 
 def config_log(controller):
-    log_filename = tempfile.gettempdir() + "/monitor-heap.log";
+    log_filename = tempfile.gettempdir() + os.sep + "monitor-heap.log";
     log_format = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
     log_date_format = "%d/%m/%Y %H:%M:%S"
 
