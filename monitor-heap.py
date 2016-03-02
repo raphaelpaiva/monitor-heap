@@ -14,10 +14,12 @@ log = None
 def main():
     args = parse_args()
     config_log(args.controller)
+
+    cli = jbosscli.Jbosscli(args.controller, args.auth)
     if (args.domain):
-        monitor_domain(args.controller, args.auth, args.max_heap_usage, args.sleep_interval)
+        monitor_domain(cli, args.max_heap_usage, args.sleep_interval)
     else:
-        monitor(args.controller, args.auth, args.max_heap, args.sleep_interval)
+        monitor(cli, args.max_heap, args.sleep_interval)
 
 def config_log(controller):
     log_filename = tempfile.gettempdir() + os.sep + "monitor-heap.log";
@@ -83,29 +85,29 @@ def parse_args():
 
     return parser.parse_args()
 
-def monitor(controller, auth, max_heap, sleep_interval):
-    log.info("Monitoring controller: %s; max_heap: %s; interval %s", controller, max_heap, sleep_interval)
+def monitor(cli, max_heap, sleep_interval):
+    log.info("Monitoring controller: %s; max_heap: %s; interval %s", cli.controller, max_heap, sleep_interval)
 
     while(True):
         try:
-            used_heap = jbosscli.read_used_heap(controller, auth)[0]
+            used_heap = cli.read_used_heap()[0]
 
             log.info("heap: %.2f gb", used_heap)
 
             if (used_heap > max_heap):
-               log.warn("Restaring", controller)
-               jbosscli.restart(controller, auth)
+               log.warn("Restaring", cli.controller)
+               cli.restart()
 
         except jbosscli.CliError as e:
-            log.error("An error occurred while monitoring %s", controller)
+            log.error("An error occurred while monitoring %s", cli.controller)
             log.exception(e)
 
         sleep(sleep_interval)
 
 
-def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
-    log.info("Monitoring domain controller: %s; max_heap_usage: %s%%; interval: %ss", controller, max_heap_usage, sleep_interval)
-    instances = discover_instances(controller, auth)
+def monitor_domain(cli, max_heap_usage, sleep_interval):
+    log.info("Monitoring domain controller: %s; max_heap_usage: %s%%; interval: %ss", cli.controller, max_heap_usage, sleep_interval)
+    instances = discover_instances(cli)
     instances_to_restart = []
 
     while(True):
@@ -113,7 +115,7 @@ def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
             try:
                 instances_to_restart[:] = []
 
-                used_heap, max_heap = jbosscli.read_used_heap(controller, auth, instance.host, instance.name)
+                used_heap, max_heap = cli.read_used_heap(instance.host, instance.name)
                 heap_usage = 100 * (used_heap / max_heap)
                 log.info("%s heap: %.2f gb (out of %.2f - %.2f%%)", instance, used_heap, max_heap, heap_usage)
 
@@ -126,22 +128,21 @@ def monitor_domain(controller, auth, max_heap_usage, sleep_interval):
                     log.info("Restarting %i instances", restart_count)
                     for instance in instances_to_restart:
                         log.critical("Restarting %s...", instance)
-                        jbosscli.restart(controller, auth, instance.host, instance.name)
+                        cli.restart(instance.host, instance.name)
 
             except jbosscli.CliError as e:
                 log.error("An error occurred while monitoring %s", instance)
                 log.exception(e)
 
-
         sleep(sleep_interval)
 
-def discover_instances(controller, auth):
-    hosts = jbosscli.list_domain_hosts(controller, auth)
+def discover_instances(cli):
+    hosts = cli.list_domain_hosts()
     log.info("Found %i hosts: %s", len(hosts), ", ".join(hosts))
 
     instances = []
     for host in hosts:
-        servers = jbosscli.list_servers(controller, auth, host)
+        servers = cli.list_servers(host)
         for server in servers:
             instances.append(ServerInstance(server, host))
     log.info("Found %i instances.", len(instances))
