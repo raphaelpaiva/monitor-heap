@@ -4,7 +4,7 @@ import logging
 import logging.handlers
 import socket
 import sys
-import jbosscli
+import jbosscli.jbosscli as jbosscli
 import tempfile
 import os
 from time import sleep

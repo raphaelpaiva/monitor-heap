@@ -1,0 +1,3 @@
+[submodule "jbosscli"]
+	path = jbosscli
+	url = raphael.duarte@picasso:/opt/git/jbosscli.git
