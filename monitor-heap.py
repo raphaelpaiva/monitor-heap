@@ -13,35 +13,36 @@ log = None
 
 def main():
     args = parse_args()
-    config_log(args.controller)
+    config_log(args.controller, args.debug)
 
     cli = jbosscli.Jbosscli(args.controller, args.auth)
-    if (args.domain):
+
+    if (cli.domain):
         monitor_domain(cli, args.max_heap_usage, args.sleep_interval)
     else:
         monitor(cli, args.max_heap, args.sleep_interval)
 
-def config_log(controller):
-    log_filename = tempfile.gettempdir() + os.sep + "monitor-heap.log";
+def config_log(controller, debug):
+    log_filename = tempfile.gettempdir() + os.sep + "monitor-heap.log" if not debug else None;
     log_format = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
     log_date_format = "%d/%m/%Y %H:%M:%S"
-
-    formatter = logging.Formatter(log_format, log_date_format)
-
-    handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
-    handler.setFormatter(formatter)
-    handler.setLevel(logging.INFO)
 
     logging.basicConfig(format=log_format,
                         filename=log_filename,
                         datefmt=log_date_format,
-                        level=logging.INFO)
+                        level=logging.INFO if not debug else logging.DEBUG)
 
     global log
     log = logging.getLogger("monitor-heap ({0})".format(controller))
 
-    log.propagate = False
-    log.addHandler(handler)
+    if not debug:
+        formatter = logging.Formatter(log_format, log_date_format)
+        handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.INFO)
+
+        log.propagate = False
+        log.addHandler(handler)
 
     logging.getLogger("requests.packages.urllib3").setLevel(logging.WARNING)
 
@@ -63,16 +64,10 @@ def parse_args():
                         type=int,
                         default=default_sleep_interval)
 
-    domain_group = parser.add_mutually_exclusive_group()
-
-    domain_group.add_argument("--max-heap",
+    parser.add_argument("--max-heap",
                               help="The value in gb in which to take action. If in domain mode, use --max-heap-usage.",
                               type=float,
                               default=default_max_heap)
-
-    domain_group.add_argument("--domain",
-                              help="Monitor all instances managed by the controller in domain mode.",
-                              action="store_true")
 
     parser.add_argument("--max-heap-usage",
                         help="The percentage of heap usage in which to take action i.e. --max-heap-usage 95 for a 95%% threshold. If in standalone mode, use --max-heap.",
@@ -82,6 +77,10 @@ def parse_args():
     parser.add_argument("--auth",
                         help="Authorization key in the format username:password to be used with jboss web interface authentication.",
                         default=default_auth)
+
+    parser.add_argument("--debug",
+                        help="Prints debug logging to sysout",
+                        action="store_true")
 
     return parser.parse_args()
 
