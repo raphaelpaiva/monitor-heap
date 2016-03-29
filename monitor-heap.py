@@ -106,11 +106,8 @@ def monitor(cli, max_heap, sleep_interval):
 
 def monitor_domain(cli, max_heap_usage, sleep_interval):
     log.info("Monitoring domain controller: %s; max_heap_usage: %s%%; interval: %ss", cli.controller, max_heap_usage, sleep_interval)
-    try:
-        instances = discover_instances(cli)
-    except jbosscli.CliError as e:
-        log_exception(e)
-        exit(1)
+
+    instances = cli.instances
 
     instances_to_restart = []
 
@@ -140,38 +137,9 @@ def monitor_domain(cli, max_heap_usage, sleep_interval):
 
         sleep(sleep_interval)
 
-def discover_instances(cli):
-    hosts = cli.list_domain_hosts()
-    log.info("Found %i hosts: %s", len(hosts), ", ".join(hosts))
-
-    instances = []
-    for host in hosts:
-        servers = []
-        try:
-            servers = cli.list_servers(host)
-        except jbosscli.CliError as e:
-            log.warning("No servers found for host {0}. Reason: {1}".format(host, e.msg))
-        for server in servers:
-            instances.append(ServerInstance(server, host))
-
-    log.info("Found %i instances.", len(instances))
-
-    if log.isEnabledFor(logging.DEBUG):
-        for instance in instances:
-            log.debug(instance)
-
-    return instances
-
 def log_exception(e):
     log.error(e.msg)
     log.error(e.raw)
     log.exception(e)
-
-class ServerInstance:
-    def __init__(self, name, host):
-        self.name = name
-        self.host = host
-    def __str__(self):
-        return "[{0}, {1}]".format(self.host, self.name)
 
 if __name__ == "__main__": main()
