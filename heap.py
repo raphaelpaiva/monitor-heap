@@ -44,6 +44,10 @@ def monitor_domain(cli, args, log):
             log.error("An error occurred while monitoring %s", instance)
             log_exception(e)
 
+def log_exception(e):
+    log.error(e.msg)
+    log.error(e.raw)
+    log.exception(e)
 
 mon = monitor.Monitor()
 parser = mon.arg_parser

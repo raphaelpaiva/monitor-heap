@@ -3,8 +3,6 @@ import argparse
 import logging
 import logging.handlers
 import socket
-import sys
-import jbosscli.jbosscli as jbosscli
 import tempfile
 import os
 from time import sleep
@@ -67,8 +65,3 @@ class Monitor(object):
         while(True):
             f(cli, self.args, self.log)
             sleep(sleep_interval)
-
-    def log_exception(e):
-        log.error(e.msg)
-        log.error(e.raw)
-        log.exception(e)
