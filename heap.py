@@ -49,7 +49,7 @@ def log_exception(e):
     log.error(e.raw)
     log.exception(e)
 
-mon = monitor.Monitor()
+mon = monitor.Monitor("monitor-heap")
 parser = mon.arg_parser
 
 default_max_heap       = 3.5

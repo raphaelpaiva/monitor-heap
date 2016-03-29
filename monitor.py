@@ -8,9 +8,10 @@ import os
 from time import sleep
 
 class Monitor(object):
-    def __init__(self):
+    def __init__(self, name=None):
         self.arg_parser = argparse.ArgumentParser(description="Monitors through loop and sleep.")
         self.log = None
+        self.name = name
 
     def prepare(self):
         self.args = self._parse_args()
@@ -26,7 +27,7 @@ class Monitor(object):
                             datefmt=log_date_format,
                             level=logging.INFO if not debug else logging.DEBUG)
 
-        self.log = logging.getLogger("monitor-heap ({0})".format(controller))
+        self.log = logging.getLogger("{0} ({1})".format(self.name, controller))
 
         if not debug:
             formatter = logging.Formatter(log_format, log_date_format)
