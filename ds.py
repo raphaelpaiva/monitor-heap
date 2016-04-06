@@ -10,12 +10,22 @@ def monitor_standalone(cli, args, log):
         datasources = datasources_by_instance[instance].keys()
         for ds in datasources:
             stats = cli.read_datasource_statistics(ds, instance)
-            active_count = stats['ActiveCount']
-            available_count = stats['AvailableCount']
-            max_used_count = stats['MaxUsedCount']
-            percentage = 100 * (float(active_count) / float(available_count))
 
-            log.info("{0} - {1}: {2}/{3} ({4}) - {5}%".format(instance, ds, active_count, available_count, max_used_count, percentage))
+            active_count = int(stats['ActiveCount'])
+            available_count = int(stats['AvailableCount'])
+            max_used_count = int(stats['MaxUsedCount'])
+            in_use_count = int(stats['InUseCount'])
+
+            active_percentage = 100 * (float(active_count) / float(available_count)) if available_count > 0 else 0
+            idle_count = active_count - in_use_count
+            in_use_percentage = 100 * (float(in_use_count) / float(active_count)) if active_count > 0 else 0
+
+            log.info("%s - %s: %i/%i (%.2f%% active) (%i max), %i/%i (%.2f%% in use)", instance, ds, active_count, available_count, active_percentage, max_used_count, in_use_count, idle_count, in_use_percentage)
+
+            if (active_percentage > 95):
+                log.critical("%s - %s is critical: %.2f%% active connections.", instance, ds, active_percentage)
+                cli.flush_idle_connections(ds, instance)
+                log.critical("%s - %s %i idle connections flushed.", instance, ds, idle_count)
 
 
 mon = monitor.Monitor("monitor-ds")
