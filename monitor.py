@@ -15,11 +15,14 @@ class Monitor(object):
 
     def prepare(self):
         self.args = self._parse_args()
-        self._config_log(self.args.controller, self.args.debug)
+        self._config_log()
 
-    def _config_log(self, controller, debug):
-        log_filename = tempfile.gettempdir() + os.sep + "monitor-heap.log" if not debug else None;
-        log_format = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
+    def _config_log(self):
+        controller      = self.args.controller
+        debug           = self.args.debug
+        log_filename    = self.args.log_file if not debug else None;
+
+        log_format      = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
         log_date_format = "%d/%m/%Y %H:%M:%S"
 
         logging.basicConfig(format=log_format,
@@ -43,6 +46,7 @@ class Monitor(object):
     def _parse_args(self):
         default_hostname       = socket.gethostname() + ":9990"
         default_sleep_interval = 300
+        default_log_file       = tempfile.gettempdir() + os.sep + "monitor.log"
 
         self.arg_parser.add_argument("--sleep-interval",
                             help="The time in seconds between reads",
@@ -56,6 +60,10 @@ class Monitor(object):
         self.arg_parser.add_argument("--controller",
                             help="The controller to connect to in the hostname:port format",
                             default=default_hostname)
+
+        self.arg_parser.add_argument("--log-file",
+                            help="The path to the output logfile",
+                            default=default_log_file)
 
         return self.arg_parser.parse_args()
 
