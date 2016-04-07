@@ -40,14 +40,10 @@ def monitor_domain(cli, args, log):
                     log.critical("Restarting %s...", instance)
                     cli.restart(instance.host, instance.name)
 
-        except jbosscli.CliError as e:
+        except Exception as e:
             log.error("An error occurred while monitoring %s", instance)
-            log_exception(e)
+            log.exception(e)
 
-def log_exception(e):
-    log.error(e.msg)
-    log.error(e.raw)
-    log.exception(e)
 
 mon = monitor.Monitor("monitor-heap")
 parser = mon.arg_parser
