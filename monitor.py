@@ -20,7 +20,7 @@ class Monitor(object):
     def _config_log(self):
         controller      = self.args.controller
         debug           = self.args.debug
-        log_filename    = self.args.log_file if not debug else None;
+        log_filename    = self.args.log_file
 
         log_format      = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
         log_date_format = "%d/%m/%Y %H:%M:%S"
@@ -32,7 +32,7 @@ class Monitor(object):
 
         self.log = logging.getLogger("{0} ({1})".format(self.name, controller))
 
-        if not debug:
+        if log_filename:
             formatter = logging.Formatter(log_format, log_date_format)
             handler = logging.handlers.TimedRotatingFileHandler(log_filename, when='midnight')
             handler.setFormatter(formatter)
@@ -46,7 +46,7 @@ class Monitor(object):
     def _parse_args(self):
         default_hostname       = socket.gethostname() + ":9990"
         default_sleep_interval = 300
-        default_log_file       = tempfile.gettempdir() + os.sep + "monitor.log"
+        default_log_file       = None
 
         self.arg_parser.add_argument("--sleep-interval",
                             help="The time in seconds between reads",
