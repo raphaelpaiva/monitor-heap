@@ -22,6 +22,10 @@ def monitor_standalone(cli, args, log):
 
             log.info("%s - %s: %i/%i (%.2f%% active) (%i max), %i/%i (%.2f%% in use)", instance, ds, active_count, available_count, active_percentage, max_used_count, in_use_count, idle_count, in_use_percentage)
 
+            header = "host;server;ds;active_count;available_count;active_percentage;max_used_count;in_use_count;idle_count;in_use_percentage"
+            stats = "{0};{1};{2};{3};{4};{5:.2f};{6};{7};{8};{9:.2f}".format(instance.host, instance.name, ds, active_count, available_count, active_percentage, max_used_count, in_use_count, idle_count, in_use_percentage)
+            monitor.write_statistics(header, stats, "stats-ds.csv")
+
             if (active_percentage > 95):
                 log.critical("%s - %s is critical: %.2f%% active connections.", instance, ds, active_percentage)
                 cli.flush_idle_connections(ds, instance)

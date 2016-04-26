@@ -1,6 +1,4 @@
 #!/usr/bin/python
-import os
-import time
 import monitor
 import jbosscli.jbosscli as jbosscli
 
@@ -32,7 +30,7 @@ def monitor_domain(cli, args, log):
 
             header = "host;server;used_heap;max_heap;heap_usage"
             stats = "{0};{1};{2:.2f};{3:.2f};{4:.2f}".format(instance.host, instance.name, used_heap, max_heap, heap_usage)
-            write_statistics(header, stats)
+            monitor.write_statistics(header, stats, "stats-heap.csv")
 
             if (heap_usage > max_heap_usage):
                 log.critical("%s is critical: %.2f%%", instance, heap_usage)
@@ -48,17 +46,6 @@ def monitor_domain(cli, args, log):
         for instance in instances_to_restart:
             log.critical("Restarting %s...", instance)
             cli.restart(instance.host, instance.name)
-
-def write_statistics(header, stats):
-    stats_file = "stats-heap.csv"
-
-    should_write_header = not os.path.isfile(stats_file)
-
-    with open(stats_file, "a+") as g:
-        if (should_write_header):
-            g.write("date;time;" + header + "\n")
-        datetime = time.strftime("%d/%m/%Y;%H:%M:%S")
-        g.write(datetime + ";" + stats + "\n")
 
 mon = monitor.Monitor("monitor-heap")
 parser = mon.arg_parser

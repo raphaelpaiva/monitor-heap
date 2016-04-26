@@ -5,7 +5,18 @@ import logging.handlers
 import socket
 import tempfile
 import os
+import time
 from time import sleep
+
+def write_statistics(header, stats, stats_file):
+    should_write_header = not os.path.isfile(stats_file)
+
+    with open(stats_file, "a+") as g:
+        if (should_write_header):
+            g.write("date;time;" + header + "\n")
+        datetime = time.strftime("%d/%m/%Y;%H:%M:%S")
+        g.write(datetime + ";" + stats + "\n")
+
 
 class Monitor(object):
     def __init__(self, name=None):
