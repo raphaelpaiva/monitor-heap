@@ -1,5 +1,6 @@
 #!/usr/bin/python
-
+import os
+import time
 import monitor
 import jbosscli.jbosscli as jbosscli
 
@@ -21,29 +22,43 @@ def monitor_domain(cli, args, log):
     instances = cli.instances
     max_heap_usage = args.max_heap_usage
 
+    instances_to_restart = []
+
     for instance in instances:
         try:
-            instances_to_restart = []
-
             used_heap, max_heap = cli.read_used_heap(instance.host, instance.name)
             heap_usage = 100 * (used_heap / max_heap)
             log.info("%s heap: %.2f gb (out of %.2f - %.2f%%)", instance, used_heap, max_heap, heap_usage)
+
+            header = "host;server;used_heap;max_heap;heap_usage"
+            stats = "{0};{1};{2:.2f};{3:.2f};{4:.2f}".format(instance.host, instance.name, used_heap, max_heap, heap_usage)
+            write_statistics(header, stats)
 
             if (heap_usage > max_heap_usage):
                 log.critical("%s is critical: %.2f%%", instance, heap_usage)
                 instances_to_restart.append(instance)
 
-            restart_count = len(instances_to_restart)
-            if (restart_count > 0):
-                log.info("Restarting %i instances", restart_count)
-                for instance in instances_to_restart:
-                    log.critical("Restarting %s...", instance)
-                    cli.restart(instance.host, instance.name)
-
         except Exception as e:
             log.error("An error occurred while monitoring %s", instance)
             log.exception(e)
 
+    restart_count = len(instances_to_restart)
+    if (restart_count > 0):
+        log.info("Restarting %i instances", restart_count)
+        for instance in instances_to_restart:
+            log.critical("Restarting %s...", instance)
+            cli.restart(instance.host, instance.name)
+
+def write_statistics(header, stats):
+    stats_file = "stats-heap.csv"
+
+    should_write_header = not os.path.isfile(stats_file)
+
+    with open(stats_file, "a+") as g:
+        if (should_write_header):
+            g.write("date;time;" + header + "\n")
+        datetime = time.strftime("%d/%m/%Y;%H:%M:%S")
+        g.write(datetime + ";" + stats + "\n")
 
 mon = monitor.Monitor("monitor-heap")
 parser = mon.arg_parser
