@@ -19,16 +19,19 @@ def monitor_standalone(cli, args, log):
 
 
 def monitor_domain(cli, args, log):
-    instances = cli.instances
+    instances = []
+    map(lambda x: instances.extend(h.instances), [h.instances for h in cli.hosts])
+
     max_heap_usage = args.max_heap_usage
 
     instances_to_restart = []
 
     for instance in instances:
         try:
-            used_heap, max_heap = cli.read_used_heap(
-                instance.host, instance.name
-            )
+            memory_status = instance.read_memory_status()
+
+            used_heap = float(memory_status["heap-memory-usage"]["used"]) / 1024 / 1024 / 1024
+            max_heap = float(memory_status["heap-memory-usage"]["max"]) / 1024 / 1024 / 1024
 
             heap_usage = 100 * (used_heap / max_heap)
             log.info(

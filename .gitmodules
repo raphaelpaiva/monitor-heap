@@ -1,3 +1,4 @@
 [submodule "jbosscli"]
 	path = jbosscli
-	url = https://github.com/raphaelpaiva/jbosscli.git
+	url = http://gogs.jfrj.jus.br/seinap/jbosscli.git
+	branch = refactor_data
